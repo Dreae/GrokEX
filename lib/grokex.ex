@@ -39,13 +39,14 @@ defmodule GrokEX do
     patterns = Keyword.get(opts, :patterns, %{}) |> Map.merge(GrokEX.DefaultPatterns.default_patterns())
     case compile_regex(string, [patterns: patterns]) do
       {:ok, regex} ->
-        fn string ->
-          if Regex.match?(regex, string) do
-            Regex.named_captures(regex, string)
-          else
-            :no_match
-          end
-        end
+        {:ok,
+          fn string ->
+            if Regex.match?(regex, string) do
+              Regex.named_captures(regex, string)
+            else
+              :no_match
+            end
+          end}
       err -> err
     end
   end
