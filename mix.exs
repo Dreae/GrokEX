@@ -23,7 +23,8 @@ defmodule GrokEX.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:unicode_guards, "~> 0.3.1"}
+      {:unicode_guards, "~> 0.3.1"},
+      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
     ]
   end
 

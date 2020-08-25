@@ -1,24 +1,43 @@
 defmodule GrokEX do
   @moduledoc """
-  Documentation for `GrokEX`.
-  """
-
-  @doc """
-  Hello world.
+  Compiles grok patterns into Elixir objects which can be used for testing
+  strings against patterns.
 
   ## Examples
+  ```
+  iex> GrokEX.compile_regex("Here's a number %{NUMBER:the_number}")
+  {:ok,
+    ~r/Here's a number (?<the_number>(?:(?<![0-9.+-])(?>[+-]?(?:(?:[0-9]+(?:\\.[0-9]+)?)|(?:\\.[0-9]+)))))/}
 
-      iex> GrokEX.hello()
-      :world
-
+  iex> GrokEX.compile_predicate("User %{QUOTEDSTRING:username} connected from %{IP:user_address}")
+  #Function<0.46228848/1 in GrokEX.compile_predicate/2>
+  ```
   """
+
   import Unicode.Guards
 
   @type grok_predicate :: (String.t() -> :no_match | map())
+  @type compile_opts :: {:patterns, %{String.t() => String.t()}}
 
-  @spec compile_predicate(String.t(), %{String.t() => String.t()}) :: {:ok, grok_predicate()} | {:error, term()}
-  def compile_predicate(string, patterns) do
-    case compile_regex(string, patterns) do
+  @doc """
+  Compiles a grok pattern to a function that takes a string and returns either the
+  named captures if the string matches the pattern, or `:no_match` if the string
+  doesn't match.
+
+  ## Examples
+
+  ```
+  iex> GrokEX.compile_predicate("User %{QUOTEDSTRING:username} connected from %{IP:user_address}")
+  ```
+
+  ## Options
+    * `:patterns` - Provide custom patterns to the grok compiler. These patterns will be merged with
+      the default patterns
+  """
+  @spec compile_predicate(String.t(), [compile_opts()]) :: {:ok, grok_predicate()} | {:error, term()}
+  def compile_predicate(string, opts \\ []) do
+    patterns = Keyword.get(opts, :patterns, %{}) |> Map.merge(GrokEX.DefaultPatterns.default_patterns())
+    case compile_regex(string, [patterns: patterns]) do
       {:ok, regex} ->
         fn string ->
           if Regex.match?(regex, string) do
@@ -31,19 +50,24 @@ defmodule GrokEX do
     end
   end
 
-  @spec compile_predicate(String.t()) :: {:ok, grok_predicate()} | {:error, term()}
-  def compile_predicate(string) do
-    compile_predicate(string, %{})
-  end
+  @spec compile_regex(String.t(), [compile_opts()]) :: {:ok, Regex.t()} | {:error, term()}
+  @doc """
+  Compiles a grok pattern to a function that takes a string and returns either the
+  named captures if the string matches the pattern, or `:no_match` if the string
+  doesn't match.
 
-  @spec compile_regex(String.t()) :: {:ok, Regex.t()} | {:error, term()}
-  def compile_regex(string) do
-    compile_regex(string, %{})
-  end
+  ## Examples
 
-  @spec compile_regex(String.t(), %{String.t() => String.t()}) :: {:ok, Regex.t()} | {:error, term()}
-  def compile_regex(string, patterns) do
-    patterns = Map.merge(GrokEX.DefaultPatterns.default_patterns(), patterns)
+  ```
+  iex> GrokEX.compile_regex("User %{QUOTEDSTRING:username} connected from %{IP:user_address}")
+  ```
+
+  ## Options
+    * `:patterns` - Provide custom patterns to the grok compiler. These patterns will be merged with
+      the default patterns
+  """
+  def compile_regex(string, opts \\ []) do
+    patterns = Keyword.get(opts, :patterns, %{}) |> Map.merge(GrokEX.DefaultPatterns.default_patterns())
     with {:ok, pattern} <- compile_pattern([], string, patterns),
          {:ok, regex} <- Regex.compile(pattern)
     do

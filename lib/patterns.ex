@@ -19,9 +19,10 @@ defmodule GrokEX.DefaultPatterns do
   }
 
   @doc """
-  Default patterns used by GrokEX. Most patterns are from logstash.
+  Default patterns used by GrokEX. See [GrokEX/lib/patterns.ex](https://github.com/Dreae/GrokEX/blob/master/lib/patterns.ex)
+  for the complete list.
 
-  [logstash-patterns-core](https://github.com/logstash-plugins/logstash-patterns-core/blob/master/patterns/grok-patterns)
+  Most patterns are from [logstash-patterns-core](https://github.com/logstash-plugins/logstash-patterns-core/blob/master/patterns/grok-patterns).
   """
   @spec default_patterns() :: %{String.t() => String.t()}
   def default_patterns do
